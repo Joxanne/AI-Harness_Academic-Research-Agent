@@ -246,3 +246,39 @@ if hasattr(_tasks, '_py_current_task') and asyncio.current_task is not _tasks._p
 **待處理：**
 - GitHub Pages 需在 repo Settings → Pages 手動啟用（一次性）
 - HF Spaces 需設定 `GEMINI_API_KEY` Secret 才能啟動容器
+
+---
+
+## [2026-06-08] 架構優化：Governance / Router / Rewriter + 評測框架 + 自動截圖
+
+**主題：** 對標 Charles8745/2026DRL-HW4，補足 AI Harness 工程設計的治理層、評測量化指標與自動化截圖
+
+**討論內容：**
+- 分析參考 repo 的系統設計：Governance 治理層（prompt injection 偵測、groundedness 驗證）、Intent Router（三類路由）、Query Rewriter、完整 eval 框架
+- 確認自動截圖採用 Playwright 真實瀏覽器方案，並同步更新 infographic.html
+
+**決策與結論：**
+- 新增 3 個前處理層（Governance → Router → Rewriter），置於 Gemini Orchestrator 前
+- TurnBudget 類別取代硬編碼 `for _ in range(12)`
+- Router 使用獨立 Gemini 呼叫做 intent classification，fallback 為 `new_research`
+- Rewriter 將使用者中文查詢轉換為英文學術關鍵字，提升 arXiv 精準度
+- Eval 框架量化 4 個指標：governance_accuracy / router_accuracy / task_success_rate / budget_compliance
+- Playwright 腳本自動拍 5 種情境截圖（新研究、KB 命中、注入攻擊、超出範圍、複合流程）
+
+**產出：**
+- `src/governance.py` — TurnBudget + check_input + groundedness_check
+- `src/router.py` — intent route()（knowledge_query / new_research / out_of_scope）
+- `src/rewriter.py` — query rewrite()
+- `src/tools/declarations.py` — 抽出 tool declarations（從 agent.py 解耦）
+- `src/agent.py` — 整合所有新層，5 Stage pipeline
+- `src/app.py` — 新增 4 個 internal step labels（🛡 / 🔀 / ✏️ / ✅）+ session slots
+- `requirements.txt` — 加入 playwright
+- `eval/testset.json` — 15 筆測試案例（5 情境 × 3）
+- `eval/run_eval.py` — 批次評測腳本，輸出 eval/results.json
+- `infographic.html` — 新增 Governance / Router / Rewriter 節點（pipeline + Section 04.5）
+- `scripts/auto_screenshot.py` — Playwright 自動截圖（5 情境）
+
+**待處理：**
+- 執行 `pip install playwright && playwright install chromium` 後跑 `python scripts/auto_screenshot.py`
+- 執行 `python eval/run_eval.py` 取得量化指標後貼入報告
+- Push 至 GitHub origin（`git push origin master`）

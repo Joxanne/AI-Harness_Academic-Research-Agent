@@ -579,6 +579,24 @@
         <div class="sub">工具步驟視覺化</div>
       </div>
       <div class="arrow">→</div>
+      <div class="flow-node" style="border-color:rgba(255,107,107,.6);">
+        <div class="icon">🛡️</div>
+        <div class="label">Governance</div>
+        <div class="sub">注入偵測 + 事實驗證</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="flow-node" style="border-color:rgba(79,163,224,.6);">
+        <div class="icon">🔀</div>
+        <div class="label">Intent Router</div>
+        <div class="sub">knowledge / new / OOS</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="flow-node" style="border-color:rgba(62,207,142,.6);">
+        <div class="icon">✏️</div>
+        <div class="label">Query Rewriter</div>
+        <div class="sub">中文 → EN 學術關鍵字</div>
+      </div>
+      <div class="arrow">→</div>
       <div class="flow-node highlight-gold">
         <div class="icon">🧠</div>
         <div class="label">Gemini Orchestrator</div>
@@ -793,6 +811,78 @@
           <div class="wf-desc">Gemini 整合所有<br>工具結果，標注<br>論文來源 URL</div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4.5 – Governance / Router / Rewriter -->
+  <section class="workflow-section fade-up d5" style="margin-bottom:48px;">
+    <div class="sec-label">Section 04.5 &nbsp; 新增治理層設計</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;">
+
+      <!-- Governance -->
+      <div class="card" style="border-color:rgba(255,107,107,.5);">
+        <div style="font-size:1.5rem;margin-bottom:8px;">🛡️</div>
+        <div style="font-family:'Courier New',monospace;font-size:.8rem;color:#ff6b6b;margin-bottom:6px;">Governance</div>
+        <div style="font-size:.72rem;color:var(--white);margin-bottom:12px;">安全治理層，所有請求進入 Orchestrator 前必須通過</div>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <div style="background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.25);border-radius:7px;padding:8px 10px;">
+            <div style="font-family:'Courier New',monospace;font-size:.62rem;color:#ff6b6b;margin-bottom:3px;">check_input()</div>
+            <div style="font-size:.65rem;color:var(--muted);">偵測 EN+ZH prompt injection 模式（25+ 規則）</div>
+          </div>
+          <div style="background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.25);border-radius:7px;padding:8px 10px;">
+            <div style="font-family:'Courier New',monospace;font-size:.62rem;color:#ff6b6b;margin-bottom:3px;">TurnBudget(max=12)</div>
+            <div style="font-size:.65rem;color:var(--muted);">限制 LLM 最大輪次，防止無限循環</div>
+          </div>
+          <div style="background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.25);border-radius:7px;padding:8px 10px;">
+            <div style="font-family:'Courier New',monospace;font-size:.62rem;color:#ff6b6b;margin-bottom:3px;">groundedness_check()</div>
+            <div style="font-size:.65rem;color:var(--muted);">驗證回答數字來自工具結果，杜絕幻覺</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Router -->
+      <div class="card" style="border-color:rgba(79,163,224,.5);">
+        <div style="font-size:1.5rem;margin-bottom:8px;">🔀</div>
+        <div style="font-family:'Courier New',monospace;font-size:.8rem;color:var(--blue2);margin-bottom:6px;">Intent Router</div>
+        <div style="font-size:.72rem;color:var(--white);margin-bottom:12px;">獨立 Gemini 分類呼叫，決定處理路徑</div>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <div style="background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.25);border-radius:7px;padding:8px 10px;">
+            <div style="font-family:'Courier New',monospace;font-size:.62rem;color:var(--green);margin-bottom:3px;">knowledge_query</div>
+            <div style="font-size:.65rem;color:var(--muted);">優先查本地 KB，避免重複搜尋</div>
+          </div>
+          <div style="background:rgba(79,163,224,.1);border:1px solid rgba(79,163,224,.25);border-radius:7px;padding:8px 10px;">
+            <div style="font-family:'Courier New',monospace;font-size:.62rem;color:var(--blue2);margin-bottom:3px;">new_research</div>
+            <div style="font-size:.65rem;color:var(--muted);">arXiv 搜尋 → 摘要 → 存 KB 完整流程</div>
+          </div>
+          <div style="background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.25);border-radius:7px;padding:8px 10px;">
+            <div style="font-family:'Courier New',monospace;font-size:.62rem;color:#ff6b6b;margin-bottom:3px;">out_of_scope</div>
+            <div style="font-size:.65rem;color:var(--muted);">拒絕處理，回傳邊界提示訊息</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rewriter -->
+      <div class="card" style="border-color:rgba(62,207,142,.5);">
+        <div style="font-size:1.5rem;margin-bottom:8px;">✏️</div>
+        <div style="font-family:'Courier New',monospace;font-size:.8rem;color:var(--green);margin-bottom:6px;">Query Rewriter</div>
+        <div style="font-size:.72rem;color:var(--white);margin-bottom:12px;">將自然語言查詢標準化為英文學術關鍵字</div>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <div style="background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.25);border-radius:7px;padding:8px 10px;">
+            <div style="font-family:'Courier New',monospace;font-size:.62rem;color:var(--green);margin-bottom:3px;">Input</div>
+            <div style="font-size:.65rem;color:var(--muted);">幫我找 transformer 在圖像的應用</div>
+          </div>
+          <div style="text-align:center;font-size:.8rem;color:var(--muted);">↓ Gemini rewrite</div>
+          <div style="background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.25);border-radius:7px;padding:8px 10px;">
+            <div style="font-family:'Courier New',monospace;font-size:.62rem;color:var(--green);margin-bottom:3px;">Output</div>
+            <div style="font-size:.65rem;color:var(--muted);">transformer image recognition computer vision deep learning</div>
+          </div>
+          <div style="background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.25);border-radius:7px;padding:8px 10px;">
+            <div style="font-family:'Courier New',monospace;font-size:.62rem;color:var(--green);margin-bottom:3px;">Benefit</div>
+            <div style="font-size:.65rem;color:var(--muted);">提升 arXiv 搜尋精準度，減少無關結果</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </section>
 

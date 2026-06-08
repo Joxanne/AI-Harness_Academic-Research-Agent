@@ -43,11 +43,17 @@ import chainlit as cl
 from src.agent import ResearchAgent
 
 TOOL_LABELS = {
-    "search_papers": "搜尋 arXiv 論文",
-    "summarize_paper": "產生中文摘要",
-    "save_to_knowledge_base": "存入知識庫",
-    "query_knowledge_base": "查詢知識庫（RAG）",
-    "expand_context": "擴展段落上下文",
+    # internal pipeline steps
+    "_governance":    "🛡 安全檢查",
+    "_router":        "🔀 意圖分類",
+    "_rewriter":      "✏️ 查詢改寫",
+    "_groundedness":  "✅ 事實驗證",
+    # research tools
+    "search_papers":           "搜尋 arXiv 論文",
+    "summarize_paper":         "產生中文摘要",
+    "save_to_knowledge_base":  "存入知識庫",
+    "query_knowledge_base":    "查詢知識庫（RAG）",
+    "expand_context":          "擴展段落上下文",
 }
 
 WELCOME_MESSAGE = """## 智慧學術研究助理
@@ -69,6 +75,11 @@ WELCOME_MESSAGE = """## 智慧學術研究助理
 async def on_chat_start():
     agent = ResearchAgent()
     cl.user_session.set("agent", agent)
+    cl.user_session.set("slots", {
+        "topics_queried": [],
+        "papers_saved": 0,
+        "last_intent": None,
+    })
     await cl.Message(content=WELCOME_MESSAGE).send()
 
 
@@ -83,11 +94,13 @@ async def on_message(message: cl.Message):
     await thinking_msg.send()
 
     tool_steps: list[cl.Step] = []
+    slots = cl.user_session.get("slots") or {
+        "topics_queried": [], "papers_saved": 0, "last_intent": None
+    }
 
     async def on_step(tool_name: str, args: dict, result):
+        nonlocal slots
         label = TOOL_LABELS.get(tool_name, tool_name)
-        # Use tool_name as step name (Chainlit has built-in icons for "tool")
-        # Put the Chinese label in the output header to avoid avatar 400s
         step = cl.Step(name=tool_name, type="tool")
         await step.__aenter__()
 
@@ -104,6 +117,17 @@ async def on_message(message: cl.Message):
 
         await step.__aexit__(None, None, None)
         tool_steps.append(step)
+
+        # Update session slots
+        if tool_name == "_router" and isinstance(result, dict):
+            slots["last_intent"] = result.get("intent")
+        elif tool_name == "save_to_knowledge_base":
+            slots["papers_saved"] = slots.get("papers_saved", 0) + 1
+        elif tool_name == "search_papers" and isinstance(args, dict) and args.get("query"):
+            topics = slots.setdefault("topics_queried", [])
+            if args["query"] not in topics:
+                topics.append(args["query"])
+        cl.user_session.set("slots", slots)
 
     try:
         response_text = await agent.run(message.content, on_step=on_step)
