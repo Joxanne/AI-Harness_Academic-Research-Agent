@@ -194,19 +194,16 @@ query_knowledge_base(question)
 
 ---
 
-## Live Demo 通道
+## Live Demo
 
-### 方法一：本機 + ngrok 公開網址
+**線上 Demo（無需本機）：**  
+👉 https://huggingface.co/spaces/Jnnnnnn/academic-research-agent
 
-```bash
-pip install pyngrok
-python demo_tunnel.py
-```
-
-### 方法二：直接本機存取
+### 本機啟動
 
 ```bash
-chainlit run src/app.py --host 0.0.0.0 --port 8000
+chainlit run src/app.py
+# 瀏覽器開啟 http://localhost:8000
 ```
 
 ---
