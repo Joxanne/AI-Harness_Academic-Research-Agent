@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧學術研究助理 — AI Harness 系統架構</title>
+<style>
+  :root {
+    --navy:   #0d1b2a;
+    --navy2:  #112236;
+    --navy3:  #162d45;
+    --gold:   #f4a900;
+    --gold2:  #ffc93c;
+    --blue:   #4fa3e0;
+    --blue2:  #7ec8f7;
+    --green:  #3ecf8e;
+    --red:    #ff6b6b;
+    --white:  #e8f0f8;
+    --muted:  #7a9ab8;
+    --border: rgba(79,163,224,.25);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'Palatino Linotype','Book Antiqua',Palatino,serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Starfield background ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,.6), transparent),
+      radial-gradient(1px 1px at 42% 55%, rgba(255,255,255,.4), transparent),
+      radial-gradient(1.5px 1.5px at 68% 30%, rgba(244,169,0,.5), transparent),
+      radial-gradient(1px 1px at 82% 75%, rgba(255,255,255,.5), transparent),
+      radial-gradient(1px 1px at 25% 80%, rgba(79,163,224,.6), transparent),
+      radial-gradient(1.5px 1.5px at 55% 12%, rgba(255,255,255,.4), transparent),
+      radial-gradient(1px 1px at 90% 45%, rgba(255,255,255,.3), transparent),
+      radial-gradient(1px 1px at 5%  60%, rgba(244,169,0,.4), transparent);
+    pointer-events: none;
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 40px 32px 60px; }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(244,169,0,.3); }
+    50%      { box-shadow: 0 0 0 8px rgba(244,169,0,0); }
+  }
+  @keyframes flow {
+    0%   { stroke-dashoffset: 200; }
+    100% { stroke-dashoffset: 0; }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
+  @keyframes glow {
+    0%,100% { text-shadow: 0 0 20px rgba(244,169,0,.4); }
+    50%      { text-shadow: 0 0 40px rgba(244,169,0,.8), 0 0 80px rgba(244,169,0,.3); }
+  }
+
+  .fade-up { animation: fadeUp .7s ease both; }
+  .d1 { animation-delay: .1s; }
+  .d2 { animation-delay: .25s; }
+  .d3 { animation-delay: .4s; }
+  .d4 { animation-delay: .55s; }
+  .d5 { animation-delay: .7s; }
+  .d6 { animation-delay: .85s; }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    padding: 20px 0 48px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 48px;
+  }
+  header .eyebrow {
+    font-family: 'Courier New',monospace;
+    font-size: .75rem;
+    letter-spacing: .2em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  header h1 {
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 700;
+    line-height: 1.2;
+    animation: glow 3s ease-in-out infinite;
+    background: linear-gradient(135deg, var(--gold2) 0%, var(--gold) 40%, var(--blue2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 14px;
+  }
+  header .subtitle {
+    font-family: 'Courier New',monospace;
+    font-size: .85rem;
+    color: var(--muted);
+    letter-spacing: .05em;
+  }
+
+  /* ── Section labels ── */
+  .sec-label {
+    font-family: 'Courier New',monospace;
+    font-size: .65rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sec-label::before {
+    content: '';
+    display: inline-block;
+    width: 24px; height: 1px;
+    background: var(--gold);
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--navy2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  /* ──────────────────────────────────────
+     SECTION 1 – Architecture Flow
+  ────────────────────────────────────── */
+  .arch-section { margin-bottom: 48px; }
+
+  .flow-pipeline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 28px 20px;
+    background: var(--navy2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .flow-pipeline::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(79,163,224,.04) 0%, transparent 60%, rgba(244,169,0,.04) 100%);
+    pointer-events: none;
+  }
+
+  .flow-node {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 12px 16px;
+    background: var(--navy3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    min-width: 100px;
+    text-align: center;
+    transition: transform .2s, border-color .2s;
+    cursor: default;
+  }
+  .flow-node:hover { transform: translateY(-3px); border-color: var(--gold); }
+  .flow-node .icon { font-size: 1.5rem; }
+  .flow-node .label {
+    font-size: .72rem;
+    font-family: 'Courier New',monospace;
+    color: var(--white);
+    line-height: 1.3;
+  }
+  .flow-node .sub {
+    font-size: .6rem;
+    color: var(--muted);
+  }
+
+  .flow-node.highlight-gold  { border-color: rgba(244,169,0,.5); }
+  .flow-node.highlight-blue  { border-color: rgba(79,163,224,.5); }
+  .flow-node.highlight-green { border-color: rgba(62,207,142,.5); }
+
+  .arrow {
+    color: var(--muted);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .branch-box {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 12px 16px;
+    background: rgba(17,34,54,.8);
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+  }
+  .branch-box .branch-label {
+    font-family: 'Courier New',monospace;
+    font-size: .6rem;
+    color: var(--gold);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+  .branch-row {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .branch-node {
+    padding: 7px 12px;
+    background: var(--navy3);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: .65rem;
+    font-family: 'Courier New',monospace;
+    color: var(--white);
+    white-space: nowrap;
+  }
+  .branch-node.green { border-color: rgba(62,207,142,.4); color: var(--green); }
+  .branch-node.blue  { border-color: rgba(79,163,224,.4); color: var(--blue); }
+
+  /* ──────────────────────────────────────
+     SECTION 2+3 – Two columns
+  ────────────────────────────────────── */
+  .cols-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    margin-bottom: 48px;
+  }
+  @media (max-width: 900px) { .cols-2 { grid-template-columns: 1fr; } }
+
+  /* Tools */
+  .tool-list { display: flex; flex-direction: column; gap: 10px; }
+  .tool-item {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 12px;
+    align-items: start;
+    padding: 14px 16px;
+    background: var(--navy3);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    transition: border-color .2s, transform .2s;
+  }
+  .tool-item:hover { border-color: var(--gold); transform: translateX(3px); }
+  .tool-num {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    color: var(--navy);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Courier New',monospace;
+    font-size: .75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .tool-body .tool-name {
+    font-family: 'Courier New',monospace;
+    font-size: .8rem;
+    color: var(--gold2);
+    margin-bottom: 3px;
+  }
+  .tool-body .tool-desc {
+    font-size: .72rem;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+  .tool-io {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .io-pill {
+    font-family: 'Courier New',monospace;
+    font-size: .58rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: .03em;
+  }
+  .io-pill.in  { background: rgba(79,163,224,.15);  color: var(--blue2);  border: 1px solid rgba(79,163,224,.3); }
+  .io-pill.out { background: rgba(62,207,142,.12); color: var(--green); border: 1px solid rgba(62,207,142,.3); }
+
+  /* ChromaDB */
+  .chroma-wrap { display: flex; flex-direction: column; gap: 14px; height: 100%; }
+  .layer-card {
+    flex: 1;
+    background: var(--navy3);
+    border-radius: 10px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .layer-card.l1 { border: 1px solid rgba(244,169,0,.4); }
+  .layer-card.l2 { border: 1px solid rgba(79,163,224,.4); }
+  .layer-card::before {
+    content: '';
+    position: absolute; top: 0; right: 0;
+    width: 60px; height: 60px;
+    border-radius: 0 10px 0 60px;
+    opacity: .15;
+  }
+  .layer-card.l1::before { background: var(--gold); }
+  .layer-card.l2::before { background: var(--blue); }
+
+  .layer-badge {
+    display: inline-block;
+    font-family: 'Courier New',monospace;
+    font-size: .6rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+  .layer-card.l1 .layer-badge { background: rgba(244,169,0,.15); color: var(--gold); border: 1px solid rgba(244,169,0,.3); }
+  .layer-card.l2 .layer-badge { background: rgba(79,163,224,.15); color: var(--blue); border: 1px solid rgba(79,163,224,.3); }
+
+  .layer-title {
+    font-size: .95rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .layer-card.l1 .layer-title { color: var(--gold2); }
+  .layer-card.l2 .layer-title { color: var(--blue2); }
+
+  .layer-meta {
+    font-family: 'Courier New',monospace;
+    font-size: .65rem;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .layer-meta span { color: var(--white); }
+
+  .layer-use {
+    margin-top: 10px;
+    font-size: .7rem;
+    color: var(--muted);
+    background: rgba(255,255,255,.04);
+    border-radius: 6px;
+    padding: 8px 12px;
+    line-height: 1.5;
+  }
+
+  /* ──────────────────────────────────────
+     SECTION 4 – Workflow Decision Tree
+  ────────────────────────────────────── */
+  .workflow-section { margin-bottom: 48px; }
+  .workflow-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    align-items: start;
+    padding: 28px 24px;
+    background: var(--navy2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+  }
+  @media (max-width: 1000px) { .workflow-grid { grid-template-columns: repeat(3,1fr); } }
+
+  .wf-step {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    text-align: center;
+  }
+  .wf-circle {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Courier New',monospace;
+    font-size: .8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+  .wf-circle.gold  { background: rgba(244,169,0,.2);  border: 2px solid var(--gold);  color: var(--gold);  }
+  .wf-circle.blue  { background: rgba(79,163,224,.2); border: 2px solid var(--blue);  color: var(--blue);  }
+  .wf-circle.green { background: rgba(62,207,142,.2); border: 2px solid var(--green); color: var(--green); animation-delay: .5s; }
+  .wf-circle.red   { background: rgba(255,107,107,.2);border: 2px solid var(--red);   color: var(--red);   animation-delay: 1s; }
+  .wf-circle.muted { background: rgba(122,154,184,.2);border: 2px solid var(--muted); color: var(--muted); animation-delay: 1.5s; }
+
+  .wf-title {
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1.3;
+  }
+  .wf-desc {
+    font-family: 'Courier New',monospace;
+    font-size: .6rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .wf-connector {
+    align-self: center;
+    font-size: 1.4rem;
+    color: var(--border);
+    margin-top: 12px;
+  }
+
+  .decision-box {
+    grid-column: span 1;
+    background: var(--navy3);
+    border: 1px solid rgba(244,169,0,.3);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .decision-box .dec-q {
+    font-size: .75rem;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .dec-branch {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .dec-row {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: .62rem;
+    font-family: 'Courier New',monospace;
+  }
+  .dec-row.yes { background: rgba(62,207,142,.1);  color: var(--green); border: 1px solid rgba(62,207,142,.2); }
+  .dec-row.no  { background: rgba(255,107,107,.1); color: var(--red);   border: 1px solid rgba(255,107,107,.2); }
+  .dec-row .tag { font-size: .55rem; opacity: .7; }
+
+  /* ──────────────────────────────────────
+     SECTION 5 + bottom
+  ────────────────────────────────────── */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    margin-bottom: 40px;
+  }
+  @media (max-width: 800px) { .bottom-row { grid-template-columns: 1fr; } }
+
+  .eval-list { display: flex; flex-direction: column; gap: 12px; }
+  .eval-item {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 14px 16px;
+    background: var(--navy3);
+    border-radius: 9px;
+    border: 1px solid var(--border);
+  }
+  .eval-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .eval-icon.gold  { background: rgba(244,169,0,.15); }
+  .eval-icon.blue  { background: rgba(79,163,224,.15); }
+  .eval-icon.green { background: rgba(62,207,142,.15); }
+  .eval-text .eval-name {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 3px;
+  }
+  .eval-text .eval-detail {
+    font-family: 'Courier New',monospace;
+    font-size: .63rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* Ref / Inspiration */
+  .ref-box {
+    padding: 18px 20px;
+    background: var(--navy3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    height: 100%;
+  }
+  .ref-title {
+    font-size: .75rem;
+    color: var(--gold);
+    margin-bottom: 12px;
+    font-family: 'Courier New',monospace;
+    letter-spacing: .05em;
+  }
+  .ref-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    margin-bottom: 10px;
+    font-size: .7rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .ref-row::before {
+    content: '▸';
+    color: var(--blue);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .ref-row span { color: var(--white); }
+
+  /* Tech stack chips */
+  .chips {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+    padding: 28px 0 10px;
+    border-top: 1px solid var(--border);
+  }
+  .chip {
+    font-family: 'Courier New',monospace;
+    font-size: .7rem;
+    padding: 5px 14px;
+    border-radius: 20px;
+    letter-spacing: .06em;
+    border: 1px solid;
+    transition: transform .2s;
+  }
+  .chip:hover { transform: scale(1.08); }
+  .chip.gold  { color: var(--gold);  border-color: rgba(244,169,0,.4);  background: rgba(244,169,0,.08); }
+  .chip.blue  { color: var(--blue2); border-color: rgba(79,163,224,.4); background: rgba(79,163,224,.08); }
+  .chip.green { color: var(--green); border-color: rgba(62,207,142,.4); background: rgba(62,207,142,.08); }
+  .chip.muted { color: var(--muted); border-color: rgba(122,154,184,.3); background: rgba(122,154,184,.06); }
+
+  footer {
+    text-align: center;
+    padding-top: 20px;
+    font-family: 'Courier New',monospace;
+    font-size: .62rem;
+    color: var(--muted);
+    letter-spacing: .08em;
+  }
+
+  /* ── Dividers ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header class="fade-up d1">
+    <div class="eyebrow">AIoT HW4 &nbsp;·&nbsp; AI Harness Systems Design</div>
+    <h1>智慧學術研究助理 — AI Harness 系統架構</h1>
+    <div class="subtitle">HW4: AI Harness Systems Design &nbsp;|&nbsp; Google Gemini 3.1 Flash Lite + Chainlit + ChromaDB</div>
+  </header>
+
+  <!-- SECTION 1 – Architecture Flow -->
+  <section class="arch-section fade-up d2">
+    <div class="sec-label">Section 01 &nbsp; 系統架構總覽</div>
+    <div class="flow-pipeline">
+      <div class="flow-node">
+        <div class="icon">👤</div>
+        <div class="label">使用者輸入</div>
+        <div class="sub">繁體中文查詢</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="flow-node highlight-blue">
+        <div class="icon">⛓️</div>
+        <div class="label">Chainlit UI</div>
+        <div class="sub">工具步驟視覺化</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="flow-node highlight-gold">
+        <div class="icon">🧠</div>
+        <div class="label">Gemini Orchestrator</div>
+        <div class="sub">gemini-3.1-flash-lite</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="flow-node highlight-gold">
+        <div class="icon">🔀</div>
+        <div class="label">Confidence Router</div>
+        <div class="sub">distance &lt; 0.7?</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="branch-box">
+        <div class="branch-label">雙路徑分支</div>
+        <div class="branch-row">
+          <div class="branch-node green">✅ 知識庫充足 → RAG 回答</div>
+        </div>
+        <div class="branch-row" style="font-size:.55rem;color:var(--muted);">— 或 —</div>
+        <div class="branch-row">
+          <div class="branch-node blue">🔍 arXiv 搜尋</div>
+          <div class="arrow" style="font-size:.8rem;">→</div>
+          <div class="branch-node blue">📝 摘要</div>
+          <div class="arrow" style="font-size:.8rem;">→</div>
+          <div class="branch-node blue">💾 存入 KB</div>
+        </div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="flow-node" style="border-color:rgba(62,207,142,.5);">
+        <div class="icon">🗄️</div>
+        <div class="label">ChromaDB</div>
+        <div class="sub">兩層向量索引</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="flow-node" style="border-color:rgba(244,169,0,.6); animation: pulse 2s ease-in-out infinite;">
+        <div class="icon">💬</div>
+        <div class="label">最終回答</div>
+        <div class="sub">附來源標注</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2+3 – Tools & ChromaDB -->
+  <div class="cols-2 fade-up d3">
+    <!-- Tools -->
+    <div>
+      <div class="sec-label">Section 02 &nbsp; 五個工具設計</div>
+      <div class="card">
+        <div class="tool-list">
+          <div class="tool-item">
+            <div class="tool-num">T1</div>
+            <div class="tool-body">
+              <div class="tool-name">search_papers</div>
+              <div class="tool-desc">搜尋 arXiv 論文</div>
+              <div class="tool-io">
+                <span class="io-pill in">IN: query, max_results</span>
+                <span class="io-pill out">OUT: papers list</span>
+              </div>
+            </div>
+          </div>
+          <div class="tool-item">
+            <div class="tool-num">T2</div>
+            <div class="tool-body">
+              <div class="tool-name">summarize_paper</div>
+              <div class="tool-desc">產生繁體中文結構化摘要</div>
+              <div class="tool-io">
+                <span class="io-pill in">IN: title, abstract</span>
+                <span class="io-pill out">OUT: structured summary</span>
+              </div>
+            </div>
+          </div>
+          <div class="tool-item">
+            <div class="tool-num">T3</div>
+            <div class="tool-body">
+              <div class="tool-name">save_to_knowledge_base</div>
+              <div class="tool-desc">存入本地 ChromaDB 知識庫</div>
+              <div class="tool-io">
+                <span class="io-pill in">IN: title, abstract, arxiv_id, url, tags, year</span>
+                <span class="io-pill out">OUT: confirmation + count</span>
+              </div>
+            </div>
+          </div>
+          <div class="tool-item">
+            <div class="tool-num">T4</div>
+            <div class="tool-body">
+              <div class="tool-name">query_knowledge_base</div>
+              <div class="tool-desc">兩層 RAG 查詢，回傳信心度指標</div>
+              <div class="tool-io">
+                <span class="io-pill in">IN: question, use_chunks</span>
+                <span class="io-pill out">OUT: papers + chunks + kb_sufficient</span>
+              </div>
+            </div>
+          </div>
+          <div class="tool-item">
+            <div class="tool-num">T5</div>
+            <div class="tool-body">
+              <div class="tool-name">expand_context</div>
+              <div class="tool-desc">擴展段落上下文（前後相鄰 chunk）</div>
+              <div class="tool-io">
+                <span class="io-pill in">IN: arxiv_id, chunk_index</span>
+                <span class="io-pill out">OUT: expanded text</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ChromaDB -->
+    <div>
+      <div class="sec-label">Section 03 &nbsp; ChromaDB 兩層記憶架構</div>
+      <div class="card" style="height: calc(100% - 34px);">
+        <div class="chroma-wrap">
+          <div class="layer-card l1">
+            <div class="layer-badge">Layer 1 — 摘要層</div>
+            <div class="layer-title">paper_abstracts Collection</div>
+            <div class="layer-meta">
+              粒度：<span>論文整篇</span>（每篇一筆）<br>
+              嵌入：<span>title + abstract 全文</span><br>
+              Metadata：<span>title, arxiv_id, url, tags, year</span><br>
+              模型：<span>paraphrase-multilingual-MiniLM-L12-v2</span>
+            </div>
+            <div class="layer-use">
+              ⚡ 用途：Confidence Router 快速判斷知識庫是否充足<br>
+              閾值：distance &lt; 0.7 → kb_sufficient = true
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:.7rem;font-family:'Courier New',monospace;">
+            <span style="flex:1;height:1px;background:var(--border);"></span>
+            ↕ 同一篇論文
+            <span style="flex:1;height:1px;background:var(--border);"></span>
+          </div>
+          <div class="layer-card l2">
+            <div class="layer-badge">Layer 2 — 區塊層</div>
+            <div class="layer-title">paper_chunks Collection</div>
+            <div class="layer-meta">
+              粒度：<span>300 字 chunk，overlap 50 字</span><br>
+              Metadata：<span>arxiv_id, chunk_index, total_chunks</span><br>
+              查詢：<span>top-5 相似段落</span>
+            </div>
+            <div class="layer-use">
+              🔬 用途：細粒度 RAG，精準定位論文中的具體段落<br>
+              expand_context 可取前後 chunk 補完上下文
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4 – Workflow Decision Tree -->
+  <section class="workflow-section fade-up d4">
+    <div class="sec-label">Section 04 &nbsp; Agent Workflow &amp; Confidence Router</div>
+    <div class="workflow-grid">
+      <div class="wf-step">
+        <div class="wf-circle gold">①</div>
+        <div class="wf-title">接收問題</div>
+        <div class="wf-desc">使用者輸入研究問題<br>（中英文皆可）</div>
+      </div>
+      <div class="wf-connector">→</div>
+      <div class="wf-step">
+        <div class="wf-circle blue">②</div>
+        <div class="wf-title">查詢知識庫</div>
+        <div class="wf-desc">query_knowledge_base<br>Layer1 快速掃描</div>
+      </div>
+      <div class="wf-connector">→</div>
+      <div class="decision-box">
+        <div class="dec-q">🔀 kb_sufficient?</div>
+        <div class="dec-branch">
+          <div class="dec-row yes">
+            <span class="tag">TRUE</span>&nbsp;distance &lt; 0.7<br>→ 直接從 KB 回答
+          </div>
+          <div class="dec-row no">
+            <span class="tag">FALSE</span>&nbsp;distance ≥ 0.7<br>→ 觸發 arXiv 流程
+          </div>
+        </div>
+      </div>
+      <div class="wf-connector">→</div>
+      <div class="wf-step">
+        <div class="wf-circle gold">③</div>
+        <div class="wf-title">知識充足路徑</div>
+        <div class="wf-desc">T4 query_kb<br>+ T5 expand_context<br>→ 精準引用回答</div>
+      </div>
+
+      <!-- second row -->
+      <div style="grid-column:1/-1; height:1px; background:var(--border); margin: 8px 0;"></div>
+
+      <div class="wf-step">
+        <div class="wf-circle red">④</div>
+        <div class="wf-title">搜尋新論文</div>
+        <div class="wf-desc">T1 search_papers<br>關鍵字英文化<br>arXiv API 搜尋</div>
+      </div>
+      <div class="wf-connector">→</div>
+      <div class="wf-step">
+        <div class="wf-circle blue">⑤</div>
+        <div class="wf-title">產生摘要</div>
+        <div class="wf-desc">T2 summarize_paper<br>Gemini → 繁中<br>結構化輸出</div>
+      </div>
+      <div class="wf-connector">→</div>
+      <div class="wf-step">
+        <div class="wf-circle green">⑥</div>
+        <div class="wf-title">存入知識庫</div>
+        <div class="wf-desc">T3 save_to_kb<br>Layer1 + Layer2<br>雙層索引建立</div>
+      </div>
+      <div class="wf-connector">→</div>
+      <div class="wf-step">
+        <div class="wf-circle muted">⑦</div>
+        <div class="wf-title">生成最終回答</div>
+        <div class="wf-desc">Gemini 整合所有<br>工具結果，標注<br>論文來源 URL</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 5 + Reference -->
+  <div class="bottom-row fade-up d5">
+    <div>
+      <div class="sec-label">Section 05 &nbsp; Evaluation 方法</div>
+      <div class="card">
+        <div class="eval-list">
+          <div class="eval-item">
+            <div class="eval-icon gold">🎯</div>
+            <div class="eval-text">
+              <div class="eval-name">回答準確性</div>
+              <div class="eval-detail">人工評估回答內容與來源論文的一致性<br>核對 arXiv URL 是否真實存在</div>
+            </div>
+          </div>
+          <div class="eval-item">
+            <div class="eval-icon blue">⚡</div>
+            <div class="eval-text">
+              <div class="eval-name">工具呼叫效率</div>
+              <div class="eval-detail">統計每次對話的工具呼叫總次數<br>目標：重複查詢應優先命中 KB 而非重新搜尋</div>
+            </div>
+          </div>
+          <div class="eval-item">
+            <div class="eval-icon green">📊</div>
+            <div class="eval-text">
+              <div class="eval-name">知識庫命中率</div>
+              <div class="eval-detail">kb_sufficient=true 的查詢比例<br>隨對話累積，命中率應持續提升</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="sec-label">設計參考 &amp; 架構說明</div>
+      <div class="ref-box">
+        <div class="ref-title">// DESIGN DECISIONS</div>
+        <div class="ref-row">
+          <span>兩層 RAG 架構</span> 參考 local-ai-knowledge-agent 的 hierarchical indexing 設計，Layer1 快速路由、Layer2 精準檢索
+        </div>
+        <div class="ref-row">
+          <span>信心度路由</span> 以 ChromaDB 餘弦距離作為信心指標，distance &lt; 0.7 視為知識庫已有足夠資料，避免重複搜尋
+        </div>
+        <div class="ref-row">
+          <span>多語言嵌入</span> 使用 paraphrase-multilingual-MiniLM-L12-v2，支援中文查詢對應英文論文內容
+        </div>
+        <div class="ref-row">
+          <span>Chainlit 視覺化</span> 每個 Tool 呼叫以 cl.Step 即時顯示，讓 AI 決策過程完全透明可觀察
+        </div>
+        <div class="ref-row">
+          <span>Function Calling</span> 使用 Gemini protos.FunctionDeclaration 原生機制，LLM 自主決策工具呼叫順序與參數
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="chips fade-up d6">
+    <div class="chip gold">Gemini 3.1 Flash Lite</div>
+    <div class="chip blue">Chainlit</div>
+    <div class="chip green">ChromaDB</div>
+    <div class="chip blue">arXiv API</div>
+    <div class="chip muted">Sentence-Transformers</div>
+    <div class="chip muted">Python 3.11+</div>
+    <div class="chip muted">google-generativeai</div>
+  </div>
+
+  <footer>
+    AIoT HW4 &nbsp;·&nbsp; AI Harness Systems Design &nbsp;·&nbsp; Academic Research Agent &nbsp;·&nbsp; 2026
+  </footer>
+
+</div>
+</body>
+</html>
