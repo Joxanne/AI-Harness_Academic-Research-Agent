@@ -48,6 +48,14 @@ Gemini Orchestrator（Function Calling）
 
 ---
 
+## 系統架構圖
+
+[![系統架構 Infographic](infographic_preview.png)](https://Joxanne.github.io/AI-Harness_Academic-Research-Agent/infographic.html)
+
+> 點擊圖片查看完整互動版（需啟用 GitHub Pages）
+
+---
+
 ## 繳交項目
 
 | 項目 | 檔案 | 狀態 |
