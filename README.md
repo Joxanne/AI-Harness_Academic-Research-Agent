@@ -26,7 +26,7 @@ Gemini Orchestrator（Function Calling）
     ├─ query_knowledge_base ──► ChromaDB（信心度路由）
     │       ├─ 已有資料 → 直接回答
     │       └─ 資料不足 ─────────────────────────────────┐
-    │                                                     ▼
+    │                                                   ▼
     ├─ search_papers ──────────────────────► arXiv API 搜尋
     ├─ summarize_paper ────────────────────► Gemini 中文摘要
     ├─ save_to_knowledge_base ─────────────► ChromaDB 存入
