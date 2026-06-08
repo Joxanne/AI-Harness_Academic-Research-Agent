@@ -5,6 +5,14 @@
 
 ---
 
+
+## Live Demo
+
+**線上 Demo：**  
+ https://huggingface.co/spaces/Jnnnnnn/academic-research-agent
+
+---
+
 ## 系統簡介
 
 本系統以 **LLM as Controller** 架構實作一個智慧學術研究助理。使用者輸入研究問題，Google Gemini 作為 Orchestrator，自動決策並依序呼叫工具，完成「搜尋論文 → 中文摘要 → 存入知識庫 → RAG 查詢回答」的完整流程。
@@ -194,10 +202,6 @@ query_knowledge_base(question)
 
 ---
 
-## Live Demo
-
-**線上 Demo（無需本機）：**  
-👉 https://huggingface.co/spaces/Jnnnnnn/academic-research-agent
 
 ### 本機啟動
 
