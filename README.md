@@ -199,6 +199,12 @@ query_knowledge_base(question)
 **線上 Demo（無需本機）：**  
 👉 https://huggingface.co/spaces/Jnnnnnn/academic-research-agent
 
+### 系統截圖
+
+| 歡迎介面 & 查詢輸入 | 論文摘要輸出結果 |
+|:---:|:---:|
+| ![Demo 1 — 歡迎介面與查詢](Demo_pic1.png) | ![Demo 2 — 論文摘要結果](Demo_pic2.png) |
+
 ### 本機啟動
 
 ```bash
