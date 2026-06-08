@@ -91,7 +91,7 @@ async def on_message(message: cl.Message):
         step = cl.Step(name=tool_name, type="tool")
         await step.__aenter__()
 
-        args_str = json.dumps(args, ensure_ascii=False, indent=2)
+        args_str = json.dumps(args, ensure_ascii=False, indent=2, default=str)
         step.input = f"**{label}**\n```json\n{args_str}\n```"
 
         if isinstance(result, str):

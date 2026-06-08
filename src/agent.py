@@ -143,7 +143,11 @@ class ResearchAgent:
 
             fn_response_parts = []
             for fc in fn_calls:
-                args = dict(fc.args)
+                # Normalize protobuf types: RepeatedComposite → list, MapComposite → dict
+                args = {
+                    k: list(v) if "Repeated" in type(v).__name__ else v
+                    for k, v in fc.args.items()
+                }
                 tool_fn = _TOOL_REGISTRY.get(fc.name)
                 if tool_fn:
                     result = await asyncio.to_thread(tool_fn, **args)
