@@ -359,17 +359,22 @@
   ────────────────────────────────────── */
   .workflow-section { margin-bottom: 48px; }
   .workflow-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 12px;
-    align-items: start;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
     padding: 28px 24px;
     background: var(--navy2);
     border: 1px solid var(--border);
     border-radius: 16px;
-    position: relative;
   }
-  @media (max-width: 1000px) { .workflow-grid { grid-template-columns: repeat(3,1fr); } }
+  .wf-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .wf-row .wf-step   { flex: 1; }
+  .wf-row .decision-box { flex: 1.5; }
 
   .wf-step {
     display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -412,7 +417,6 @@
   }
 
   .decision-box {
-    grid-column: span 1;
     background: var(--navy3);
     border: 1px solid rgba(244,169,0,.3);
     border-radius: 10px;
@@ -728,61 +732,66 @@
   <section class="workflow-section fade-up d4">
     <div class="sec-label">Section 04 &nbsp; Agent Workflow &amp; Confidence Router</div>
     <div class="workflow-grid">
-      <div class="wf-step">
-        <div class="wf-circle gold">①</div>
-        <div class="wf-title">接收問題</div>
-        <div class="wf-desc">使用者輸入研究問題<br>（中英文皆可）</div>
-      </div>
-      <div class="wf-connector">→</div>
-      <div class="wf-step">
-        <div class="wf-circle blue">②</div>
-        <div class="wf-title">查詢知識庫</div>
-        <div class="wf-desc">query_knowledge_base<br>Layer1 快速掃描</div>
-      </div>
-      <div class="wf-connector">→</div>
-      <div class="decision-box">
-        <div class="dec-q">🔀 kb_sufficient?</div>
-        <div class="dec-branch">
-          <div class="dec-row yes">
-            <span class="tag">TRUE</span>&nbsp;distance &lt; 0.7<br>→ 直接從 KB 回答
-          </div>
-          <div class="dec-row no">
-            <span class="tag">FALSE</span>&nbsp;distance ≥ 0.7<br>→ 觸發 arXiv 流程
+      <!-- Row 1: KB sufficient path -->
+      <div class="wf-row">
+        <div class="wf-step">
+          <div class="wf-circle gold">①</div>
+          <div class="wf-title">接收問題</div>
+          <div class="wf-desc">使用者輸入研究問題<br>（中英文皆可）</div>
+        </div>
+        <div class="wf-connector">→</div>
+        <div class="wf-step">
+          <div class="wf-circle blue">②</div>
+          <div class="wf-title">查詢知識庫</div>
+          <div class="wf-desc">query_knowledge_base<br>Layer1 快速掃描</div>
+        </div>
+        <div class="wf-connector">→</div>
+        <div class="decision-box">
+          <div class="dec-q">🔀 kb_sufficient?</div>
+          <div class="dec-branch">
+            <div class="dec-row yes">
+              <span class="tag">TRUE</span>&nbsp;distance &lt; 0.7<br>→ 直接從 KB 回答
+            </div>
+            <div class="dec-row no">
+              <span class="tag">FALSE</span>&nbsp;distance ≥ 0.7<br>→ 觸發 arXiv 流程
+            </div>
           </div>
         </div>
-      </div>
-      <div class="wf-connector">→</div>
-      <div class="wf-step">
-        <div class="wf-circle gold">③</div>
-        <div class="wf-title">知識充足路徑</div>
-        <div class="wf-desc">T4 query_kb<br>+ T5 expand_context<br>→ 精準引用回答</div>
+        <div class="wf-connector">→</div>
+        <div class="wf-step">
+          <div class="wf-circle gold">③</div>
+          <div class="wf-title">知識充足路徑</div>
+          <div class="wf-desc">T4 query_kb<br>+ T5 expand_context<br>→ 精準引用回答</div>
+        </div>
       </div>
 
-      <!-- second row -->
-      <div style="grid-column:1/-1; height:1px; background:var(--border); margin: 8px 0;"></div>
+      <div style="height:1px; background:var(--border);"></div>
 
-      <div class="wf-step">
-        <div class="wf-circle red">④</div>
-        <div class="wf-title">搜尋新論文</div>
-        <div class="wf-desc">T1 search_papers<br>關鍵字英文化<br>arXiv API 搜尋</div>
-      </div>
-      <div class="wf-connector">→</div>
-      <div class="wf-step">
-        <div class="wf-circle blue">⑤</div>
-        <div class="wf-title">產生摘要</div>
-        <div class="wf-desc">T2 summarize_paper<br>Gemini → 繁中<br>結構化輸出</div>
-      </div>
-      <div class="wf-connector">→</div>
-      <div class="wf-step">
-        <div class="wf-circle green">⑥</div>
-        <div class="wf-title">存入知識庫</div>
-        <div class="wf-desc">T3 save_to_kb<br>Layer1 + Layer2<br>雙層索引建立</div>
-      </div>
-      <div class="wf-connector">→</div>
-      <div class="wf-step">
-        <div class="wf-circle muted">⑦</div>
-        <div class="wf-title">生成最終回答</div>
-        <div class="wf-desc">Gemini 整合所有<br>工具結果，標注<br>論文來源 URL</div>
+      <!-- Row 2: arXiv search path -->
+      <div class="wf-row">
+        <div class="wf-step">
+          <div class="wf-circle red">④</div>
+          <div class="wf-title">搜尋新論文</div>
+          <div class="wf-desc">T1 search_papers<br>關鍵字英文化<br>arXiv API 搜尋</div>
+        </div>
+        <div class="wf-connector">→</div>
+        <div class="wf-step">
+          <div class="wf-circle blue">⑤</div>
+          <div class="wf-title">產生摘要</div>
+          <div class="wf-desc">T2 summarize_paper<br>Gemini → 繁中<br>結構化輸出</div>
+        </div>
+        <div class="wf-connector">→</div>
+        <div class="wf-step">
+          <div class="wf-circle green">⑥</div>
+          <div class="wf-title">存入知識庫</div>
+          <div class="wf-desc">T3 save_to_kb<br>Layer1 + Layer2<br>雙層索引建立</div>
+        </div>
+        <div class="wf-connector">→</div>
+        <div class="wf-step">
+          <div class="wf-circle muted">⑦</div>
+          <div class="wf-title">生成最終回答</div>
+          <div class="wf-desc">Gemini 整合所有<br>工具結果，標注<br>論文來源 URL</div>
+        </div>
       </div>
     </div>
   </section>
