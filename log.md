@@ -199,3 +199,50 @@ if hasattr(_tasks, '_py_current_task') and asyncio.current_task is not _tasks._p
 - 功能測試 ✅
 
 **無待處理事項** — 專案完成。
+
+---
+
+## [2026-06-08] Post-完成修補與部署優化
+
+**主題：** Bug 修復、截圖嵌入、Infographic 排版修正、HF Spaces 部署
+
+**討論內容：**
+- 發現搜尋新論文時出現 `RepeatedComposite is not JSON serializable` 錯誤
+- 使用者要求將 Demo 截圖嵌入 README
+- 使用者詢問是否可在 GitHub 上直接預覽 infographic.html（不需點開）
+- Infographic Section 04 排版跑版（上下各一排的需求）
+- 使用者確認 GitHub push 不會自動同步 HF Spaces
+
+**決策與結論：**
+
+1. **RepeatedComposite 修復**
+   - 根因：Gemini Function Calling `fc.args` 的 ARRAY 型別回傳 protobuf `RepeatedComposite`，非 Python list
+   - `agent.py`：提取 args 時判斷型別名含 `"Repeated"` 即轉 `list(v)`
+   - `app.py`：`json.dumps(args, ...)` 加 `default=str` 保險層
+
+2. **Demo 截圖嵌入 README**
+   - 新增 `Demo_pic1.png`（歡迎介面）、`Demo_pic2.png`（摘要結果）並排顯示
+
+3. **Infographic 預覽方案**
+   - GitHub Pages（Option B）：Edge headless 截圖 `infographic_preview.png`，嵌入 README，點擊連 GitHub Pages
+
+4. **Section 04 排版修正**
+   - `repeat(5, 1fr)` grid 裝不下 7 個元素 → 改 flexbox 雙 row
+   - Row 1（TRUE path）：① → ② → [kb_sufficient?] → ③
+   - Row 2（FALSE path）：④ → ⑤ → ⑥ → ⑦
+
+5. **HF Spaces 部署機制**
+   - GitHub/HF 為獨立 remote，各自手動 push
+   - HF 不接受 PNG 二進位檔，`infographic_preview.png` 等加入 HF branch 的 `.gitignore`
+
+**產出：**
+- `src/agent.py`, `src/app.py` — RepeatedComposite 修復
+- `Demo_pic1.png`, `Demo_pic2.png`, `infographic_preview.png` — 截圖（GitHub only）
+- `infographic.html` — Section 04 flexbox 排版
+- `README.md` — 截圖嵌入 + 系統架構圖預覽
+- `log.md`, `CLAUDE.MD` — 狀態更新
+- 所有更動已 push 至 GitHub 及 HF Spaces
+
+**待處理：**
+- GitHub Pages 需在 repo Settings → Pages 手動啟用（一次性）
+- HF Spaces 需設定 `GEMINI_API_KEY` Secret 才能啟動容器
