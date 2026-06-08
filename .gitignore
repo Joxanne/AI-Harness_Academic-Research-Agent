@@ -35,3 +35,12 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Internal / local-only files (not for public repo)
+CLAUDE.MD
+chainlit.md
+image.png
+plan.md
+request.md
+demo_tunnel.py
+hf_README.md
