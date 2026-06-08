@@ -475,9 +475,9 @@ python -c "from src.rewriter import rewrite; print(rewrite('幫我找關於 tran
 
 ### 架構資訊圖
 
-[![系統架構 Infographic](infographic_preview.png)](infographic.html)
+[![系統架構 Infographic](infographic_preview.png)](https://htmlpreview.github.io/?https://raw.githubusercontent.com/Joxanne/AI-Harness_Academic-Research-Agent/master/infographic.html)
 
-> 點擊圖片開啟完整互動版 infographic（純 HTML，可離線瀏覽）
+> 點擊圖片在瀏覽器預覽完整互動版 Infographic（由 htmlpreview.github.io 渲染）
 
 ---
 
